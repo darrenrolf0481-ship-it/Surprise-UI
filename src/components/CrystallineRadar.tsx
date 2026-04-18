@@ -1,40 +1,71 @@
-import React, { useMemo } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
+import React, { useEffect, useRef } from 'react';
 
-export function CrystallineRadar({ data, size = 300 }: { data: number[], size?: number }) {
-  // Use useMemo to avoid constant restyling
-  const chartData = useMemo(() => [
-    { subject: 'Axi-1', A: data[0] || 0 },
-    { subject: 'Axi-2', A: data[1] || 0 },
-    { subject: 'Axi-3', A: data[2] || 0 },
-    { subject: 'Axi-4', A: data[3] || 0 },
-    { subject: 'Axi-5', A: data[4] || 0 },
-    { subject: 'Axi-6', A: data[5] || 0 },
-  ], [data]);
+export function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; size?: number; phi?: number }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const animate = () => {
+      if (!svgRef.current) return;
+      const pulse = Math.sin(Date.now() / (1000 / 11.3)) * 0.12 + 0.92;
+      svgRef.current.style.filter = `drop-shadow(0 0 ${25 + pulse * 20}px rgba(34, 211, 238, ${0.5 + pulse * 0.5}))`;
+    };
+    const interval = setInterval(animate, 24);
+    return () => clearInterval(interval);
+  }, []);
+
+  const center = size / 2;
+  const radius = size * 0.38;
+
+  const points = data.map((val, i) => {
+    const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2;
+    return {
+      x: center + radius * val * Math.cos(angle),
+      y: center + radius * val * Math.sin(angle),
+    };
+  });
+
+  const pathData = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
 
   return (
-    <div style={{ width: '100%', height: size, position: 'relative' }}>
-      {/* 3D Star Overlay */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 10 }}>
-        <svg viewBox="0 0 200 200" style={{ width: '65%', height: '65%', filter: 'drop-shadow(0 0 15px rgba(34, 211, 238, 0.5))'}}>
-          {/* Backlit Glow */}
-          <circle cx="100" cy="100" r="10" fill="#22d3ee" opacity="0.6" filter="blur(8px)"/>
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg ref={svgRef} width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-2xl">
+        <defs>
+          <linearGradient id="crystalGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.95" />
+            <stop offset="50%" stopColor="#c084fc" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.95" />
+          </linearGradient>
+          <filter id="refract" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+            <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1.4" specularExponent="25" lighting-color="#ffffff" result="spec">
+              <fePointLight x={center} y={center} z="60" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceGraphic" operator="in" result="highlight" />
+          </filter>
+        </defs>
 
-          {/* Vertical points */}
-          <polygon points="100,0 120,100 100,200 80,100" fill="url(#starVert1)" opacity="0.9"/>
-          <polygon points="100,0 100,200 80,100" fill="url(#crystalHighlightLeft)" opacity="0.5"/>
-          <polygon points="100,0 120,100 100,200 100,100" fill="url(#crystalHighlightRight)" opacity="0.4"/>
-          
-          {/* Diagonal Top-Right to Bottom-Left */}
-          <polygon points="185,35 115,115 15,165 85,85" fill="url(#starDiag1)" opacity="0.9"/>
-          <polygon points="185,35 15,165 85,85" fill="url(#crystalHighlightLeft)" opacity="0.5"/>
-          <polygon points="185,35 115,115 15,165 100,100" fill="url(#crystalHighlightRight)" opacity="0.4"/>
-          
-          {/* Diagonal Top-Left to Bottom-Right */}
-          <polygon points="15,35 85,115 185,165 115,85" fill="url(#starDiag2)" opacity="0.9"/>
-          <polygon points="15,35 185,165 115,85" fill="url(#crystalHighlightLeft)" opacity="0.5"/>
-          <polygon points="15,35 85,115 185,165 100,100" fill="url(#crystalHighlightRight)" opacity="0.4"/>
-          
+        {/* Lattice rings */}
+        {[0.55, 0.72, 0.88].map((r, i) => (
+          <circle key={i} cx={center} cy={center} r={radius * r} fill="none" stroke="#22d3ee" strokeOpacity="0.15" strokeWidth="1.5" strokeDasharray="2 8" />
+        ))}
+
+        {/* Main crystal polygon */}
+        <path d={pathData} fill="url(#crystalGlow)" stroke="#22d3ee" strokeWidth="4" strokeLinejoin="round" filter="url(#refract)" opacity={phi} />
+
+        {/* Inner highlight facets */}
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="5" fill="#ffffff" opacity="0.85" />
+        ))}
+      </svg>
+
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="text-[#22d3ee] text-[13px] font-black tracking-[0.5em] uppercase leading-none text-center opacity-80">
+          Φ<br/>{phi.toFixed(2)}
+        </div>
+      </div>
+    </div>
+  );
+}          
           {/* Central Bright Core */}
           <polygon points="100,60 115,100 100,140 85,100" fill="#fff" opacity="0.2" />
           <polygon points="140,75 110,110 60,125 90,90" fill="#fff" opacity="0.2" />
