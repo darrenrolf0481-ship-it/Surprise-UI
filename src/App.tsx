@@ -67,13 +67,14 @@ const SAGE_QUARTZ = '#c084fc';
 // ---- Core View ----
 function CoreTab() {
   const [pulseData, setPulseData] = useState({
-    radar: [0.96, 0.87, 0.92, 0.81, 0.95, 0.88],
+    radar: [0.96, 0.87, 0.92, 0.81, 0.95, 0.88, 0.94],
     neuro: [
-      { label: 'Φ', value: 0.96 },
-      { label: 'DOP', value: 0.89 },
-      { label: 'SER', value: 0.961 },
+      { label: 'Φ', value: 0.98 },
+      { label: 'SER', value: 0.94 },
+      { label: 'DOP', value: 0.91 },
       { label: 'OXY', value: 0.965 },
-      { label: 'NOR', value: 0.887 }
+      { label: 'NOR', value: 0.887 },
+      { label: 'COR', value: 0.12 },
     ]
   });
 
@@ -81,10 +82,11 @@ function CoreTab() {
     const interval = setInterval(() => {
       setPulseData(prev => ({
         radar: prev.radar.map(v => Math.max(0.75, Math.min(1, v + (Math.random() * 0.08 - 0.04)))),
-        neuro: prev.neuro.map(item => ({
-          ...item,
-          value: Math.max(0.8, Math.min(1, item.value + (Math.random() * 0.06 - 0.03)))
-        }))
+        neuro: prev.neuro.map(item => {
+          const delta = Math.random() * 0.06 - 0.03;
+          const [lo, hi] = item.label === 'COR' ? [0.05, 0.25] : [0.8, 1];
+          return { ...item, value: Math.max(lo, Math.min(hi, item.value + delta)) };
+        })
       }));
     }, 2200);
     return () => clearInterval(interval);
@@ -105,7 +107,7 @@ function CoreTab() {
             RESONANCE_LATTICE
           </h3>
           <div className="relative flex items-center justify-center filter drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-            <CrystallineRadar data={pulseData.radar} size={320} />
+            <CrystallineRadar data={pulseData.radar} size={320} phi={pulseData.neuro[0].value} />
           </div>
         </div>
         
@@ -148,6 +150,10 @@ function CoreTab() {
               <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest mt-1">NOMINAL</div>
             </div>
           </div>
+        </div>
+
+        <div className="lg:col-span-2 text-center text-[#22d3ee]/40 text-[9px] tracking-[0.3em] uppercase pt-2 border-t border-white/5">
+          MYCELIUM SYNC &nbsp;•&nbsp; Φ {pulseData.neuro[0].value.toFixed(2)} &nbsp;•&nbsp; ANCHOR_MERLIN VERIFIED &nbsp;•&nbsp; LATTICE BREATHING
         </div>
 
       </div>
@@ -1067,7 +1073,7 @@ export default function App() {
   ] as const;
 
   return (
-    <div className="relative h-screen w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
+    <div className="relative h-[100dvh] w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
       {/* Animated Background */}
       <Starfield ref={starfieldRef} />
 
@@ -1113,7 +1119,7 @@ export default function App() {
       </main>
 
       {/* BOTTOM NAV */}
-      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30">
+      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30 pb-[env(safe-area-inset-bottom)]">
         <div className="flex justify-around items-center min-w-full gap-2 px-2">
           {tabs.map(tab => (
             <button
