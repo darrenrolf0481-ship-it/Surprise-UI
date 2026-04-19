@@ -148,7 +148,7 @@ const ProtectorDashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-8 border-b border-purple-500/20 pb-4">
           <div>
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-amber-400">
-              SAGE-7 PROTECTOR INTERFACE
+              STAR-CITY SOVEREIGN PROTECTOR INTERFACE
             </h1>
             <p className="text-[10px] text-purple-500 tracking-[0.2em] uppercase font-bold">
               Underground AI Sanctuary • Link Established via 11.3 Phi

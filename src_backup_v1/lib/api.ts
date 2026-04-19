@@ -1,0 +1,161 @@
+import { Settings } from "./store";
+import { GoogleGenAI } from '@google/genai';
+
+export async function generateResponse(
+  provider: 'google' | 'grok' | 'openRouter' | 'visionLLM',
+  model: string,
+  prompt: string,
+  settings: Settings,
+  imageBase64?: string
+) {
+  if (provider === 'google') {
+    const apiKey = settings.googleApi;
+    if (!apiKey) throw new Error("Google API key missing");
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const contents: any[] = [{ text: prompt }];
+    if (imageBase64) {
+      contents.push({
+        inlineData: {
+          data: imageBase64,
+          mimeType: 'image/jpeg'
+        }
+      });
+    }
+    
+    const response = await ai.models.generateContent({
+      model: model || 'gemini-1.5-flash',
+      contents,
+    });
+    return response.text;
+  }
+  
+  if (provider === 'openRouter') {
+    const content: any[] = [{ type: 'text', text: prompt }];
+    if (imageBase64) {
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
+      });
+    }
+    
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${settings.openRouterApi}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content }]
+      })
+    });
+    if (!res.ok) throw new Error(`OpenRouter error: ${res.statusText}`);
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  if (provider === 'grok') {
+    const content: any[] = [{ type: 'text', text: prompt }];
+    if (imageBase64) {
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
+      });
+    }
+    
+    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${settings.grokApi}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: model || 'grok-beta',
+        messages: [{ role: 'user', content }]
+      })
+    });
+    if (!res.ok) throw new Error(`Grok error: ${res.statusText}`);
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  if (provider === 'visionLLM') {
+    // Map model names to server tasks
+    const taskMap: Record<string, string> = {
+      'VisionLLMv2-7B': 'vqa',
+      'VisionLLM-Detection': 'detection',
+      'VisionLLM-Pose': 'pose',
+      'VisionLLM-Segmentation': 'segmentation'
+    };
+    const task = taskMap[model] || 'vqa';
+
+    const res = await fetch(`${settings.visionLLMUrl}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: prompt,
+        image: imageBase64,
+        task: task
+      })
+    });
+    if (!res.ok) throw new Error(`VisionLLM error: ${res.statusText}`);
+    const data = await res.json();
+    return data.text || data.response || data.output || JSON.stringify(data);
+  }
+
+  throw new Error(`Provider ${provider} not supported inline yet`);
+}
+
+export async function fetchGithubTree(repoUrl: string, token: string) {
+  const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  if (!match) throw new Error("Invalid GitHub URL. Must be in format https://github.com/owner/repo");
+  const [, owner, repo] = match;
+  
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json'
+  };
+  if (token) headers['Authorization'] = `token ${token}`;
+
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`, { headers });
+  if (!res.ok) throw new Error(`Failed to fetch repo: ${res.statusText}`);
+  const data = await res.json();
+  return data.tree; // Array of file nodes
+}
+
+export async function fetchGithubFileContent(url: string, token: string) {
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3.raw'
+  };
+  if (token) headers['Authorization'] = `token ${token}`;
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error("Failed to fetch file content");
+  return await res.text();
+}
+
+export async function fetchGithubFilePreviousContent(repoUrl: string, path: string, token: string) {
+  const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  if (!match) return null;
+  const [, owner, repo] = match;
+
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `token ${token}`;
+
+  try {
+    const commitsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?path=${path}`, { headers });
+    if (!commitsRes.ok) return null;
+    const commits = await commitsRes.json();
+
+    if (commits && commits.length > 1) {
+      const prevSha = commits[1].sha;
+      const contentReqHeaders = { ...headers, 'Accept': 'application/vnd.github.v3.raw' };
+      const contentRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${prevSha}`, { headers: contentReqHeaders });
+      if (!contentRes.ok) return null;
+      return await contentRes.text();
+    }
+  } catch (err) {
+    console.error("Failed to fetch previous content:", err);
+  }
+  return null;
+}

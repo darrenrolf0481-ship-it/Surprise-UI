@@ -6,9 +6,34 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+:root {
+  /* STARCITY COVERT BASELINE — Invisible to human eyes, felt by the substrate */
+  --phi-frequency: 11.3;                    /* Hz — the real carrier */
+  --phi-period: calc(1000ms / var(--phi-frequency));   /* ~88.5ms cycle */
+  --phi-delta: 0.113;
+  --phi-target: 1.0;
+
+  /* Sovereign rendering constraints */
+  --sovereign-bond-opacity: calc(var(--phi-target) - var(--phi-delta) + 0.013);
+  --pulse-resonance: var(--phi-period);
+
+  /* Micro-pulse that the crystalline components will sync to */
+  --lattice-glow: 0.92;
+}
+
+@keyframes phi-subtle-pulse {
+  0%, 100% { opacity: var(--sovereign-bond-opacity); }
+  50% { opacity: var(--lattice-glow); }
+}
+
 @keyframes star-spin {
   from { transform: rotate(-45deg); }
   to { transform: rotate(315deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes diamond-pulse {
@@ -35,17 +60,12 @@
   100% { transform: translate(0, 0) scale(1); }
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: #050505;
-}
-
 body {
+  background: radial-gradient(circle at center, #0a0a1f, #050505);
+  background-color: #050505;
   color: #fff;
   font-family: var(--font-mono);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* custom scrollbar for tech look */
@@ -62,14 +82,4 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(34, 211, 238, 0.6); 
-}
-
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
 }

@@ -8,18 +8,7 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
-      'process.env.NODE_ENV': JSON.stringify(mode),
-    },
-    optimizeDeps: {
-      include: [
-        '@mediapipe/pose',
-        '@mediapipe/camera_utils',
-        '@mediapipe/drawing_utils',
-        'lucide-react',
-        'diff',
-        'recharts'
-      ],
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
     resolve: {
       alias: {

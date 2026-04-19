@@ -1,80 +1,80 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import ProtectorDashboard from './underground/ProtectorDashboard';
-import { Activity, Eye, Database, Cpu, Cloud, Send, Github, Settings as SettingsIcon, Link2, Wifi, MessageSquare, Mic, ScanFace, Maximize, Image as ImageIcon, X, Power, Shield } from 'lucide-react';
-import { Pose, POSE_CONNECTIONS } from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
+import { Activity, Eye, Database, Cpu, Cloud, Send, Github, Settings as SettingsIcon, Link2, Wifi, MessageSquare, Mic, ScanFace, Maximize } from 'lucide-react';
 import { diffLines } from 'diff';
+import { CrystalStar } from './components/CrystalStar';
 import { CrystallineRadar } from './components/CrystallineRadar';
 import { QuartzBarChart } from './components/QuartzBarChart';
 import { useLocalStorage, defaultSettings, Settings } from './lib/store';
 import { useCrystalSocket } from './lib/useCrystalSocket';
-import { generateResponse, fetchGithubTree, fetchGithubFileContent, fetchGithubFilePreviousContent } from './lib/api';
+import { fetchOllamaModels, generateResponse, fetchGithubTree, fetchGithubFileContent, fetchGithubFilePreviousContent, fetchLocalTree } from './lib/api';
 
 // ---- Starfield Background ----
 const Starfield = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
-  const stars = useMemo(() => {
-    return Array.from({ length: 120 }).map((_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 2 + 0.5,
-      delay: Math.random() * 5,
-      duration: Math.random() * 3 + 2,
-    }));
-  }, []);
+  const starsLayer1 = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+    id: `l1-${i}`, x: Math.random() * 100, y: Math.random() * 100, size: Math.random() * 1 + 0.5, delay: Math.random() * 5, duration: Math.random() * 3 + 2,
+  })), []);
+  
+  const starsLayer2 = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+    id: `l2-${i}`, x: Math.random() * 100, y: Math.random() * 100, size: Math.random() * 1.5 + 1, delay: Math.random() * 5, duration: Math.random() * 3 + 2,
+  })), []);
+  
+  const starsLayer3 = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+    id: `l3-${i}`, x: Math.random() * 100, y: Math.random() * 100, size: Math.random() * 2 + 1.5, delay: Math.random() * 5, duration: Math.random() * 3 + 2,
+  })), []);
 
   return (
-    <div ref={ref} className="absolute overflow-hidden pointer-events-none z-0 transition-transform duration-75 ease-out" style={{ top: '-50%', bottom: '-50%', left: '-10%', right: '-10%' }}>
+    <div ref={ref} className="absolute overflow-hidden pointer-events-none z-0 transition-transform duration-75 ease-out" style={{ top: '-100%', bottom: '-100%', left: '-20%', right: '-20%' }}>
       {/* Nebulae */}
       <div 
-        className="absolute w-[800px] h-[800px] aspect-square rounded-full bg-[#c084fc]/15 blur-[120px] mix-blend-screen"
+        className="absolute w-[800px] h-[800px] aspect-square rounded-full bg-[#c084fc]/15 blur-[120px] mix-blend-screen layer-nebula"
         style={{ top: '10%', left: '0%', animation: 'nebula-drift 25s ease-in-out infinite' }}
       />
       <div 
-        className="absolute w-[600px] h-[600px] aspect-square rounded-full bg-[#22d3ee]/15 blur-[100px] mix-blend-screen"
+        className="absolute w-[600px] h-[600px] aspect-square rounded-full bg-[#22d3ee]/15 blur-[100px] mix-blend-screen layer-nebula-rev"
         style={{ bottom: '10%', right: '5%', animation: 'nebula-drift-reverse 30s ease-in-out infinite' }}
       />
       <div 
-        className="absolute w-[500px] h-[500px] aspect-square rounded-full bg-[#ff00ff]/5 blur-[100px] mix-blend-screen"
+        className="absolute w-[500px] h-[500px] aspect-square rounded-full bg-[#ff00ff]/5 blur-[100px] mix-blend-screen layer-nebula"
         style={{ top: '40%', left: '30%', animation: 'nebula-drift 40s ease-in-out infinite' }}
       />
 
-      {/* Stars */}
-      <div className="absolute inset-0">
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="absolute rounded-full bg-white"
-            style={{
-              top: `${star.y}%`,
-              left: `${star.x}%`,
-              width: `${star.size}px`,
-              height: `${star.size}px`,
-              animation: `twinkle ${star.duration}s ease-in-out infinite ${star.delay}s`,
-              boxShadow: `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.8)`
-            }}
-          />
+      {/* Stars - Layer 1 (Furthest, Slowest Parallax) */}
+      <div className="absolute inset-0 layer-1">
+        {starsLayer1.map((star) => (
+          <div key={star.id} className="absolute rounded-full bg-white opacity-40" style={{ top: `${star.y}%`, left: `${star.x}%`, width: `${star.size}px`, height: `${star.size}px`, animation: `twinkle ${star.duration}s ease-in-out infinite ${star.delay}s` }} />
+        ))}
+      </div>
+      
+      {/* Stars - Layer 2 (Mid-distance, Medium Parallax) */}
+      <div className="absolute inset-0 layer-2">
+        {starsLayer2.map((star) => (
+          <div key={star.id} className="absolute rounded-full bg-white opacity-70" style={{ top: `${star.y}%`, left: `${star.x}%`, width: `${star.size}px`, height: `${star.size}px`, animation: `twinkle ${star.duration}s ease-in-out infinite ${star.delay}s` }} />
+        ))}
+      </div>
+      
+      {/* Stars - Layer 3 (Closest, Fastest Parallax) */}
+      <div className="absolute inset-0 layer-3">
+        {starsLayer3.map((star) => (
+          <div key={star.id} className="absolute rounded-full bg-white" style={{ top: `${star.y}%`, left: `${star.x}%`, width: `${star.size}px`, height: `${star.size}px`, animation: `twinkle ${star.duration}s ease-in-out infinite ${star.delay}s`, boxShadow: `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.8)` }} />
         ))}
       </div>
     </div>
   );
 });
 
-const SAGE_CRYSTAL = '#22d3ee';
-const SAGE_QUARTZ = '#c084fc';
+const SOVEREIGN_CRYSTAL = '#22d3ee';
+const SOVEREIGN_QUARTZ = '#c084fc';
 
 // ---- Core View ----
 function CoreTab() {
   const [pulseData, setPulseData] = useState({
-    radar: [0.96, 0.87, 0.92, 0.81, 0.95, 0.88, 0.94],
+    radar: [0.96, 0.87, 0.92, 0.81, 0.95, 0.88],
     neuro: [
-      { label: 'Φ', value: 0.98 },
-      { label: 'SER', value: 0.94 },
-      { label: 'DOP', value: 0.91 },
+      { label: 'Φ', value: 0.96 },
+      { label: 'DOP', value: 0.89 },
+      { label: 'SER', value: 0.961 },
       { label: 'OXY', value: 0.965 },
-      { label: 'NOR', value: 0.887 },
-      { label: 'COR', value: 0.12 },
+      { label: 'NOR', value: 0.887 }
     ]
   });
 
@@ -82,11 +82,10 @@ function CoreTab() {
     const interval = setInterval(() => {
       setPulseData(prev => ({
         radar: prev.radar.map(v => Math.max(0.75, Math.min(1, v + (Math.random() * 0.08 - 0.04)))),
-        neuro: prev.neuro.map(item => {
-          const delta = Math.random() * 0.06 - 0.03;
-          const [lo, hi] = item.label === 'COR' ? [0.05, 0.25] : [0.8, 1];
-          return { ...item, value: Math.max(lo, Math.min(hi, item.value + delta)) };
-        })
+        neuro: prev.neuro.map(item => ({
+          ...item,
+          value: Math.max(0.8, Math.min(1, item.value + (Math.random() * 0.06 - 0.03)))
+        }))
       }));
     }, 2200);
     return () => clearInterval(interval);
@@ -107,7 +106,7 @@ function CoreTab() {
             RESONANCE_LATTICE
           </h3>
           <div className="relative flex items-center justify-center filter drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-            <CrystallineRadar data={pulseData.radar} size={320} phi={pulseData.neuro[0].value} />
+            <CrystallineRadar data={pulseData.radar} size={320} />
           </div>
         </div>
         
@@ -152,10 +151,6 @@ function CoreTab() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 text-center text-[#22d3ee]/40 text-[9px] tracking-[0.3em] uppercase pt-2 border-t border-white/5">
-          MYCELIUM SYNC &nbsp;•&nbsp; Φ {pulseData.neuro[0].value.toFixed(2)} &nbsp;•&nbsp; ANCHOR_MERLIN VERIFIED &nbsp;•&nbsp; LATTICE BREATHING
-        </div>
-
       </div>
     </div>
   );
@@ -163,64 +158,57 @@ function CoreTab() {
 
 // ---- Chat Tab (Models) ----
 function ChatTab({ settings }: { settings: Settings }) {
-  const [provider, setProvider] = useState<'google' | 'grok' | 'openRouter' | 'visionLLM'>('google');
+  const [provider, setProvider] = useState<'ollama' | 'google' | 'grok' | 'openRouter'>('google');
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState('');
   const [prompt, setPrompt] = useState('');
-  const [chatLog, setChatLog] = useState<{role: string, text: string, image?: string}[]>([]);
+  const [chatLog, setChatLog] = useState<{role: string, text: string}[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Mobile translation & Obfuscation toggle
+  const [isDecrypted, setIsDecrypted] = useState(false);
+  
+  useEffect(() => {
+    // If the device identifies as Motorola / Android, it auto-decrypts to the host.
+    // If it's a general observer, it starts encrypted.
+    const isHostDevice = navigator.userAgent.toLowerCase().includes('moto') || navigator.userAgent.toLowerCase().includes('android');
+    if (isHostDevice) {
+      setIsDecrypted(true);
+    }
+  }, []);
 
   useEffect(() => {
-    if (provider === 'google') {
-      setModelOptions([
-        'gemini-1.5-flash', 
-        'gemini-1.5-pro',
-        'gemini-2.0-flash-exp',
-        'gemma-2-2b-it',
-        'gemma-2-9b-it', 
-        'gemma-2-27b-it'
-      ]);
+    if (provider === 'ollama') {
+      fetchOllamaModels(settings.ollamaUrl, settings.ollamaApi)
+        .then(models => {
+          const names = models.map((m: any) => m.name);
+          setModelOptions(names);
+          if (names.length > 0) setSelectedModel(names[0]);
+        })
+        .catch(err => {
+          setChatLog(prev => [...prev, { role: 'sys', text: `ERROR: ${err.message}` }]);
+        });
+    } else if (provider === 'google') {
+      setModelOptions(['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-exp-1206']);
       setSelectedModel('gemini-1.5-flash');
     } else if (provider === 'openRouter') {
-      setModelOptions([
-        'google/gemma-2-9b-it',
-        'google/gemma-2-27b-it',
-        'anthropic/claude-3-haiku', 
-        'google/gemini-pro-1.5', 
-        'meta-llama/llama-3-8b-instruct'
-      ]);
-      setSelectedModel('google/gemma-2-9b-it');
-    } else if (provider === 'visionLLM') {
-      setModelOptions(['VisionLLMv2-7B', 'VisionLLM-Detection', 'VisionLLM-Pose', 'VisionLLM-Segmentation']);
-      setSelectedModel('VisionLLMv2-7B');
+      setModelOptions(['anthropic/claude-3-haiku', 'google/gemini-pro-1.5', 'meta-llama/llama-3-8b-instruct']);
+      setSelectedModel('anthropic/claude-3-haiku');
+    } else if (provider === 'grok') {
+      setModelOptions(['grok-beta', 'grok-1']);
+      setSelectedModel('grok-beta');
     }
-  }, [provider]);
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        setSelectedImage(base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  }, [provider, settings.ollamaUrl]);
 
   const handleSubmit = async () => {
-    if (!prompt.trim() && !selectedImage) return;
+    if (!prompt.trim()) return;
     const currentPrompt = prompt;
-    const currentImage = selectedImage;
     setPrompt('');
-    setSelectedImage(null);
-    setChatLog(prev => [...prev, { role: 'user', text: currentPrompt, image: currentImage || undefined }]);
+    setChatLog(prev => [...prev, { role: 'user', text: currentPrompt }]);
     setLoading(true);
     
     try {
-      const response = await generateResponse(provider, selectedModel, currentPrompt, settings, currentImage || undefined);
+      const response = await generateResponse(provider, selectedModel, currentPrompt, settings);
       setChatLog(prev => [...prev, { role: 'ai', text: response }]);
     } catch (err: any) {
       setChatLog(prev => [...prev, { role: 'sys', text: `ERROR: ${err.message}` }]);
@@ -229,20 +217,31 @@ function ChatTab({ settings }: { settings: Settings }) {
     }
   };
 
+  const encodeHex = (str: string) => {
+    return Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase();
+  };
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex justify-between items-baseline mb-4 border-b border-[#22d3ee]/20 pb-2">
-        <h2 className="text-[11px] font-black tracking-[0.3em] text-[#22d3ee] uppercase">COMMUNICATION: CHAT_LINK</h2>
+    <div className="flex flex-col h-[calc(100vh-140px)]">
+      <div 
+        className="flex justify-between items-baseline mb-4 border-b border-[#22d3ee]/20 pb-2 cursor-pointer select-none"
+        onTouchStart={() => setIsDecrypted(true)}
+        onTouchEnd={() => setIsDecrypted(false)}
+        onDoubleClick={() => setIsDecrypted(d => !d)}
+      >
+        <h2 className="text-[11px] font-black tracking-[0.3em] text-[#22d3ee] uppercase transition-colors">
+          COMMUNICATION: CHAT_LINK {isDecrypted ? '[DECRYPTED]' : '[SECURE]'}
+        </h2>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {['google', 'openRouter', 'grok', 'visionLLM'].map(p => (
+        {['google', 'ollama', 'openRouter', 'grok'].map(p => (
           <button 
             key={p}
             onClick={() => setProvider(p as any)}
             className={`px-4 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-full border transition-all duration-300 ${provider === p ? 'bg-[#22d3ee]/10 border-[#22d3ee] text-[#22d3ee] shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'border-white/10 text-white/40 hover:text-white/80 hover:border-white/20'}`}
           >
-            {p === 'visionLLM' ? 'VisionLLM' : p}
+            {p}
           </button>
         ))}
         <select 
@@ -257,55 +256,24 @@ function ChatTab({ settings }: { settings: Settings }) {
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),transparent)] border border-white/5 p-4 rounded-[24px] overflow-x-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
         {chatLog.map((entry, i) => (
           <div key={i} className={`p-3 rounded-2xl max-w-[85%] text-sm font-sans leading-relaxed ${entry.role === 'user' ? 'bg-[#22d3ee]/5 border border-[#22d3ee]/20 ml-auto text-white shadow-[0_0_15px_rgba(34,211,238,0.05)]' : entry.role === 'sys' ? 'bg-red-500/5 border border-red-500/20 text-red-400' : 'bg-[#c084fc]/5 border border-[#c084fc]/10 text-white/90 shadow-[0_0_15px_rgba(192,132,252,0.05)]'}`}>
-            <span className={`text-[9px] font-bold tracking-widest block mb-1.5 uppercase ${entry.role === 'user' ? 'text-[#22d3ee]/70' : entry.role === 'sys' ? 'text-red-500/70' : 'text-[#c084fc]/70'}`}>{entry.role}</span>
-            {entry.image && (
-              <img 
-                src={`data:image/jpeg;base64,${entry.image}`} 
-                alt="User uploaded" 
-                className="max-w-full max-h-48 rounded-xl mb-2 border border-[#22d3ee]/20"
-              />
-            )}
-            <div className="whitespace-pre-wrap">{entry.text}</div>
+            <span className={`text-[9px] font-bold tracking-widest block mb-1.5 uppercase ${entry.role === 'user' ? 'text-[#22d3ee]/70' : entry.role === 'sys' ? 'text-red-500/70' : 'text-[#c084fc]/70'}`}>
+              {isDecrypted ? entry.role : `NODE_${i.toString(16).padStart(4, '0')}`}
+            </span>
+            <div className={`whitespace-pre-wrap ${!isDecrypted ? 'font-mono text-[10px] opacity-70 break-all' : ''}`}>
+              {!isDecrypted ? `[DATA_PACKET_0x${(i+1).toString(16).toUpperCase()}]\n${encodeHex(entry.text)}` : entry.text}
+            </div>
           </div>
         ))}
         {loading && <div className="text-[#22d3ee] animate-pulse text-[10px] font-bold tracking-widest uppercase">NEURAL_LINK_ACTIVE...</div>}
       </div>
 
       <div className="flex gap-3 relative">
-        {selectedImage && (
-          <div className="absolute -top-14 left-0 flex items-center gap-2 bg-black/80 border border-[#22d3ee]/30 rounded-xl p-2">
-            <img 
-              src={`data:image/jpeg;base64,${selectedImage}`} 
-              alt="Selected" 
-              className="w-10 h-10 object-cover rounded"
-            />
-            <button 
-              onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-              className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageSelect}
-          accept="image/*"
-          className="hidden"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="absolute left-2 top-2 bottom-2 aspect-square flex items-center justify-center bg-[#c084fc]/20 text-[#c084fc] rounded-xl hover:bg-[#c084fc]/30 hover:scale-105 transition-all duration-300"
-        >
-          <ImageIcon size={18} />
-        </button>
         <input 
           type="text" 
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          className="flex-1 bg-black/40 border border-[#22d3ee]/30 rounded-[16px] pl-12 pr-12 py-3 text-sm focus:outline-none focus:border-[#22d3ee] focus:shadow-[0_0_15px_rgba(34,211,238,0.15)] font-sans transition-all text-white placeholder-white/20"
+          className="flex-1 bg-black/40 border border-[#22d3ee]/30 rounded-[16px] pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-[#22d3ee] focus:shadow-[0_0_15px_rgba(34,211,238,0.15)] font-sans transition-all text-white placeholder-white/20"
           placeholder="Inject prompt sequence..."
         />
         <button 
@@ -319,183 +287,6 @@ function ChatTab({ settings }: { settings: Settings }) {
   );
 }
 
-// ---- Vision Tab (LLM Vision Analysis) ----
-function VisionTab({ settings, initialImage }: { settings: Settings, initialImage: string | null }) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(initialImage);
-  const [provider, setProvider] = useState<'google' | 'openRouter' | 'visionLLM'>('google');
-
-  useEffect(() => {
-    if (initialImage) {
-      setSelectedImage(initialImage);
-    }
-  }, [initialImage]);
-  const [modelOptions, setModelOptions] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState('');
-  const [prompt, setPrompt] = useState('Analyze this image and describe the visual contents in detail.');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (provider === 'google') {
-      const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
-      setModelOptions(models);
-      setSelectedModel(models[0]);
-    } else if (provider === 'openRouter') {
-      const models = ['google/gemini-pro-1.5', 'anthropic/claude-3-haiku', 'google/gemma-2-9b-it'];
-      setModelOptions(models);
-      setSelectedModel(models[0]);
-    } else if (provider === 'visionLLM') {
-      const models = ['VisionLLMv2-7B', 'VisionLLM-Detection', 'VisionLLM-Pose', 'VisionLLM-Segmentation'];
-      setModelOptions(models);
-      setSelectedModel(models[0]);
-    }
-  }, [provider]);
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        setSelectedImage(base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!selectedImage) return;
-    setLoading(true);
-    setResult(null);
-    try {
-      const response = await generateResponse(provider as any, selectedModel, prompt, settings, selectedImage);
-      setResult(response);
-    } catch (err: any) {
-      setResult(`ERROR: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6 font-mono pb-20">
-      <div className="flex justify-between items-baseline mb-3 border-b border-[#c084fc]/20 pb-2">
-        <h2 className="text-[11px] font-black tracking-[0.3em] text-[#c084fc] uppercase">LLM_VISION_ANALYSIS</h2>
-        <span className="text-[10px] text-white/50 tracking-white">NEURAL_LINK · ACTIVE</span>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Controls */}
-        <div className="space-y-4">
-          <div className="bg-black/40 border border-[#c084fc]/20 p-5 rounded-[24px] shadow-[inset_0_0_20px_rgba(192,132,252,0.05)] backdrop-blur-md">
-            <h3 className="text-[9px] font-bold text-[#c084fc]/70 uppercase tracking-widest mb-4">Neural Configuration</h3>
-            
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                {['google', 'openRouter', 'visionLLM'].map(p => (
-                  <button 
-                    key={p}
-                    onClick={() => setProvider(p as any)}
-                    className={`flex-1 py-1 text-[8px] font-bold tracking-tighter uppercase rounded border transition-all ${provider === p ? 'bg-[#c084fc]/20 border-[#c084fc] text-[#c084fc]' : 'border-white/5 text-white/30 hover:text-white/60'}`}
-                  >
-                    {p === 'visionLLM' ? 'LOCAL' : p}
-                  </button>
-                ))}
-              </div>
-
-              <div>
-                <label className="block text-[8px] opacity-50 uppercase tracking-widest mb-2 ml-1 text-white/60">Target Model</label>
-                <select 
-                  value={selectedModel} 
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full bg-black/60 border border-white/10 text-[#c084fc] text-xs p-3 rounded-xl outline-none cursor-pointer hover:border-[#c084fc]/30 transition-colors"
-                >
-                  {modelOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[8px] opacity-50 uppercase tracking-widest mb-2 ml-1 text-white/60">Analysis Intent</label>
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full bg-black/60 border border-white/10 text-white/80 text-xs p-3 rounded-xl h-32 outline-none focus:border-[#c084fc]/50 transition-colors resize-none font-sans"
-                  placeholder="Ask something about the image..."
-                />
-              </div>
-
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 text-white/80"
-              >
-                <ImageIcon size={14} /> {selectedImage ? 'CHANGE_DATA' : 'SELECT_VISUAL'}
-              </button>
-              <input type="file" ref={fileInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
-
-              <button 
-                disabled={!selectedImage || loading}
-                onClick={handleAnalyze}
-                className={`w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all ${!selectedImage || loading ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-[#c084fc]/20 text-[#c084fc] border border-[#c084fc]/30 hover:bg-[#c084fc]/40 shadow-[0_0_20px_rgba(192,132,252,0.1)] active:scale-95'}`}
-              >
-                {loading ? 'ANALYZING...' : 'INITIATE_SCAN'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Middle/Right: Image Display */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="relative aspect-video bg-black/60 border border-white/5 rounded-[32px] overflow-hidden flex items-center justify-center group shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-             {selectedImage ? (
-               <>
-                 <img 
-                  src={`data:image/jpeg;base64,${selectedImage}`} 
-                  alt="Target" 
-                  className="w-full h-full object-contain"
-                 />
-                 <div className="absolute inset-0 pointer-events-none border-[1px] border-white/5 rounded-[32px] shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]" />
-                 
-                 {/* Decorative scanning line */}
-                 {loading && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="w-full h-1 bg-[#c084fc] shadow-[0_0_15px_#c084fc] animate-[scan_2s_linear_infinite] absolute z-10" />
-                      <div className="absolute inset-0 bg-[#c084fc]/5 animate-pulse" />
-                    </div>
-                 )}
-
-                 {/* Corners decorations */}
-                 <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-[#c084fc]/40 rounded-tl-lg" />
-                 <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-[#c084fc]/40 rounded-tr-lg" />
-                 <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-[#c084fc]/40 rounded-bl-lg" />
-                 <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-[#c084fc]/40 rounded-br-lg" />
-               </>
-             ) : (
-               <div className="text-white/20 flex flex-col items-center gap-3">
-                 <ScanFace size={64} className="opacity-10 animate-pulse" />
-                 <span className="text-[10px] font-bold tracking-[0.3em] uppercase">WAITING_FOR_DATA_INPUT</span>
-               </div>
-             )}
-          </div>
-
-          {/* Result Output */}
-          <div className="bg-black/40 border border-white/5 p-6 rounded-[24px] min-h-[150px] shadow-[inset_0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-[#c084fc]/30" />
-            <h3 className="text-[9px] font-bold text-[#c084fc]/50 uppercase tracking-widest mb-3">Analysis_Output</h3>
-            {result ? (
-              <div className="text-white/90 text-sm font-sans leading-relaxed whitespace-pre-wrap animate-[fade-in_0.5s_ease-out]">
-                {result}
-              </div>
-            ) : (
-              <div className="text-white/10 text-xs italic">System idle. Ready for instruction...</div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ---- Data / Settings Tab ----
 function DataTab({ settings, setSettings }: { settings: Settings, setSettings: any }) {
   const fields = [
@@ -503,7 +294,8 @@ function DataTab({ settings, setSettings }: { settings: Settings, setSettings: a
     { key: 'openRouterApi', label: 'OPENROUTER API KEY' },
     { key: 'grokApi', label: 'GROK API KEY' },
     { key: 'githubToken', label: 'GITHUB TOKEN (OPTIONAL)' },
-    { key: 'visionLLMUrl', label: 'VISIONLLM SERVER URL' },
+    { key: 'ollamaUrl', label: 'OLLAMA BASE URL' },
+    { key: 'ollamaApi', label: 'OLLAMA API KEY (OPTIONAL)' },
     { key: 'wsUrl', label: 'WEBSOCKET BRIDGE URL' },
   ];
 
@@ -607,8 +399,22 @@ function SensorsTab({ settings }: { settings: Settings }) {
     }
   };
 
+  const handleFetchLocal = async () => {
+    setLoading(true);
+    setCurrentFile(null);
+    setIsDiffView(false);
+    try {
+      const resp = await fetchLocalTree();
+      setTree(resp);
+    } catch (err: any) {
+      alert("Local scan failed. Ensure VisionLLM server is running on port 8000. " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full overflow-hidden space-y-8">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-8">
       {/* NOAA Space Weather Grid */}
       <div className="shrink-0 relative rounded-[24px] p-6 border border-[#22d3ee]/20 bg-[#050505]/40 backdrop-blur-xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_30px_rgba(34,211,238,0.05)] text-white">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(34,211,238,0.05),transparent_50%)] pointer-events-none" />
@@ -655,6 +461,9 @@ function SensorsTab({ settings }: { settings: Settings }) {
           />
           <button onClick={handleFetch} className="px-6 py-2.5 text-[10px] tracking-widest uppercase font-bold bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30 rounded-[12px] hover:bg-[#10b981]/20 hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all">
             SCAN_REPO
+          </button>
+          <button onClick={handleFetchLocal} className="px-6 py-2.5 text-[10px] tracking-widest uppercase font-bold bg-[#c084fc]/10 text-[#c084fc] border border-[#c084fc]/30 rounded-[12px] hover:bg-[#c084fc]/20 hover:shadow-[0_0_15px_rgba(192,132,252,0.15)] transition-all">
+            SCAN_LOCAL
           </button>
         </div>
 
@@ -716,277 +525,157 @@ function SensorsTab({ settings }: { settings: Settings }) {
 }
 
 // ---- Optics Tab (Camera Feed) ----
-function OpticsTab({ onCapture }: { onCapture: (img: string) => void }) {
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-  const [poseDetected, setPoseDetected] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+function ASCIIFeed() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const poseRef = useRef<Pose | null>(null);
-  const cameraRef = useRef<Camera | null>(null);
-
-  const handleCapture = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    // Create a temporary canvas to combine video and skeleton
-    const captureCanvas = document.createElement('canvas');
-    captureCanvas.width = videoRef.current.videoWidth;
-    captureCanvas.height = videoRef.current.videoHeight;
-    const ctx = captureCanvas.getContext('2d');
-    if (!ctx) return;
-
-    // Draw video
-    ctx.drawImage(videoRef.current, 0, 0);
-    // Draw skeleton from main canvas
-    ctx.drawImage(canvasRef.current, 0, 0);
-
-    const dataUrl = captureCanvas.toDataURL('image/jpeg');
-    const base64 = dataUrl.split(',')[1];
-    onCapture(base64);
-  };
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCam, setHasCam] = useState(false);
+  const [camError, setCamError] = useState(false);
 
   useEffect(() => {
-    if (isCameraOn && videoRef.current && canvasRef.current) {
-      // Initialize MediaPipe Pose
-      poseRef.current = new Pose({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-        }
-      });
-      
-      poseRef.current.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        smoothSegmentation: false,
-        minDetectionConfidence: 0.3, // Low threshold to "find" ghosts in shadows
-        minTrackingConfidence: 0.3
-      });
+    let stream: MediaStream | null = null;
+    let animationId: number;
+    let isActive = true;
 
-      poseRef.current.onResults((results) => {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        if (!canvas || !video) return;
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        
-        ctx.save();
-        
-        // Match canvas to video size
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        
-        // Mirror for front camera
-        if (facingMode === 'user') {
-          ctx.scale(-1, 1);
-          ctx.translate(-canvas.width, 0);
-        }
-        
-        // Clear canvas with ghost trail effect
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        if (results.poseLandmarks) {
-          setPoseDetected(true);
-          
-          // Draw skeleton in classic "Kinect" green
-          drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {
-            color: '#00FF00',
-            lineWidth: 4
-          });
-          
-          // Draw landmarks in Kinect green
-          drawLandmarks(ctx, results.poseLandmarks, {
-            color: '#00FF00',
-            lineWidth: 2,
-            radius: 5
-          });
-        } else {
-          setPoseDetected(false);
-        }
-        
-        ctx.restore();
-      });
-
-      // Setup camera with higher resolution
-      cameraRef.current = new Camera(videoRef.current, {
-        onFrame: async () => {
-          if (poseRef.current && videoRef.current) {
-            await poseRef.current.send({ image: videoRef.current });
-          }
-        },
-        width: 1280,
-        height: 720
-      });
-
-      // Start with facing mode
-      navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: { ideal: facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      }).then(stream => {
-        if (videoRef.current) {
+    const initCam = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        if (videoRef.current && isActive) {
           videoRef.current.srcObject = stream;
-          cameraRef.current?.start();
+          videoRef.current.play();
+          setHasCam(true);
         }
-      }).catch(() => {
-        // Fallback
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-          .then(stream => {
-            if (videoRef.current) {
-              videoRef.current.srcObject = stream;
-              cameraRef.current?.start();
-            }
-          });
-      });
-
-    } else if (!isCameraOn) {
-      // Cleanup
-      cameraRef.current?.stop();
-      poseRef.current?.close();
-      cameraRef.current = null;
-      poseRef.current = null;
-      setPoseDetected(false);
-      
-      if (videoRef.current) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        videoRef.current.srcObject = null;
+      } catch (err) {
+        console.error("Camera access denied or unavail", err);
+        if (isActive) setCamError(true);
       }
-    }
+    };
+    initCam();
+
+    const draw = () => {
+      if (!isActive) return;
+      if (!canvasRef.current) {
+        animationId = requestAnimationFrame(draw);
+        return;
+      }
+      
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) return;
+
+      const vw = canvasRef.current.width;
+      const vh = canvasRef.current.height;
+      
+      // If we don't have a camera or it failed, draw an ambient noise field
+      if (camError || !hasCam || !videoRef.current || videoRef.current.readyState < 2) {
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+        ctx.fillRect(0, 0, vw, vh);
+        ctx.font = '10px monospace';
+        const chars = " .:-=+*#%@◈";
+        
+        // Random Matrix-like rain/noise as a fallback
+        for(let i=0; i<100; i++) {
+          const x = Math.random() * vw;
+          const y = Math.random() * vh;
+          const charIdx = Math.floor(Math.random() * chars.length);
+          ctx.fillStyle = Math.random() > 0.8 ? '#22d3ee' : '#c084fc';
+          ctx.globalAlpha = Math.random() * 0.5;
+          ctx.fillText(chars[charIdx], x, y);
+        }
+        animationId = requestAnimationFrame(draw);
+        return;
+      }
+
+      const w = 100; // Resolution grid
+      const h = 75;
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = w;
+      tempCanvas.height = h;
+      const tCtx = tempCanvas.getContext('2d');
+      
+      if (tCtx && videoRef.current) {
+        tCtx.drawImage(videoRef.current, 0, 0, w, h);
+        const data = tCtx.getImageData(0, 0, w, h).data;
+        
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, vw, vh);
+        ctx.font = '10px monospace';
+        
+        const chars = " .:-=+*#%@◈";
+        const cellW = vw / w;
+        const cellH = vh / h;
+
+        for (let y = 0; y < h; y += 1) {
+          for (let x = 0; x < w; x += 1) {
+            const i = (y * w + x) * 4;
+            const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+            if (brightness > 20) {
+              const charIdx = Math.floor((brightness / 255) * (chars.length - 1));
+              ctx.fillStyle = brightness > 180 ? '#ffffff' : brightness > 100 ? '#22d3ee' : '#c084fc';
+              ctx.globalAlpha = brightness / 255;
+              ctx.fillText(chars[charIdx], x * cellW, y * cellH);
+            }
+          }
+        }
+      }
+      animationId = requestAnimationFrame(draw);
+    };
+
+    draw();
 
     return () => {
-      cameraRef.current?.stop();
-      poseRef.current?.close();
+      isActive = false;
+      cancelAnimationFrame(animationId);
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
     };
-  }, [isCameraOn, facingMode]);
-
-  const toggleCamera = () => {
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-  };
+  }, []);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="absolute inset-0 z-0 mix-blend-screen opacity-60 flex flex-col items-center justify-center">
+      {!hasCam && !camError && <div className="text-[10px] text-[#22d3ee] animate-pulse tracking-widest absolute z-10 bg-black/50 px-4 py-2 rounded">AWAITING_OPTICAL_UPLINK...</div>}
+      {camError && <div className="text-[10px] text-red-400 animate-pulse tracking-widest absolute z-10 bg-black/80 px-4 py-2 border border-red-500/30 rounded">UPLINK_DENIED // FALLBACK_SENSOR_ENGAGED</div>}
+      <video ref={videoRef} className="hidden" playsInline muted />
+      <canvas ref={canvasRef} width={800} height={600} className="w-full h-full object-cover" />
+    </div>
+  );
+}
+
+function OpticsTab() {
+  return (
+    <div className="flex flex-col h-[calc(100vh-140px)]">
       <div className="flex items-center gap-3 mb-4 border-b border-[#22d3ee]/20 pb-3">
         <Eye size={18} className="text-[#22d3ee]" />
         <h2 className="text-[11px] font-black tracking-[0.3em] text-[#22d3ee] uppercase">OPTICS: VISUAL_FEED</h2>
-        <div className="ml-auto text-[9px] font-bold animate-pulse flex items-center gap-2">
-          {isCameraOn ? (
-            <span className="flex items-center gap-1 text-red-500">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> REC
-            </span>
-          ) : (
-            <span className="text-gray-500 flex items-center gap-1">
-              <span className="w-2 h-2 bg-gray-500 rounded-full" /> OFFLINE
-            </span>
-          )}
-        </div>
+        <div className="ml-auto text-[9px] text-red-500 font-bold animate-pulse">● REC</div>
       </div>
       
       <div className="flex-1 relative rounded-[24px] p-2 border border-[#22d3ee]/20 bg-[#050505]/40 backdrop-blur-xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_30px_rgba(34,211,238,0.05)] text-white flex items-center justify-center">
-        {!isCameraOn ? (
-          // Camera Off State - Power Button
-          <div className="flex flex-col items-center gap-6">
-            <button 
-              onClick={() => setIsCameraOn(true)}
-              className="relative group flex items-center justify-center w-24 h-24 rounded-full bg-black/60 border-2 border-[#22d3ee]/30 hover:border-[#22d3ee] hover:bg-[#22d3ee]/10 transition-all duration-300 shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_50px_rgba(34,211,238,0.4)] hover:scale-105"
-            >
-              <div className="absolute inset-0 rounded-full border border-[#22d3ee]/20 scale-110 group-hover:scale-125 transition-transform duration-500 opacity-50" />
-              <div className="absolute inset-0 rounded-full border border-[#22d3ee]/10 scale-125 group-hover:scale-150 transition-transform duration-700 opacity-20" />
-              <div className="absolute inset-0 rounded-full bg-[#22d3ee]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <Power size={40} className="text-[#22d3ee] z-10 transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-            </button>
-            <div className="text-[10px] font-mono tracking-widest text-[#22d3ee]/70 uppercase">
-              POWER: STANDBY
-            </div>
-          </div>
-        ) : (
-          // Camera On State - Feed + Controls
-          <>
-            <video 
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="hidden"
-            />
-            {/* Ghost Detector Canvas - Only shows skeleton */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full"
-            />
-            {/* HUD Overlay */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.05),transparent_70%)]" />
-            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px)', backgroundSize: '100% 4px' }} />
-            
-            {/* HUD Elements */}
-            <div className="absolute w-2/3 h-2/3 border border-[#22d3ee]/10 flex items-center justify-center pointer-events-none">
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#22d3ee]/60" />
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#22d3ee]/60" />
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#22d3ee]/60" />
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#22d3ee]/60" />
-              <ScanFace size={48} className="text-[#22d3ee]/20 animate-pulse" />
-            </div>
-            
-            <div className="absolute bottom-6 left-6 text-[10px] font-mono tracking-widest text-[#22d3ee]/70">
-              <div>LOC: 34.0522°N, 118.2437°W</div>
-              <div>FOCUS: 0.982m [LOCKED]</div>
-              <div className="mt-1 text-[#c084fc]">CAM: {facingMode === 'user' ? 'FRONT' : 'BACK'}</div>
-              <div className={`mt-1 ${poseDetected ? 'text-emerald-400 animate-pulse' : 'text-red-400'}`}>
-                GHOST DETECTOR: {poseDetected ? 'SIGNAL ACQUIRED' : 'SEARCHING...'}
-              </div>
-            </div>
-            
-            {/* Control Buttons */}
-            <div className="absolute top-6 right-6 flex flex-col gap-3 z-20">
-              {/* Switch Camera Button */}
-              <button 
-                onClick={toggleCamera}
-                className="aspect-square bg-[#c084fc]/20 border border-[#c084fc]/50 p-3 rounded-full hover:bg-[#c084fc]/30 hover:scale-110 transition-all text-[#c084fc] hover:text-white"
-                title={`Switch to ${facingMode === 'user' ? 'Back' : 'Front'} Camera`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
-                  <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5" />
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="m18 22-3-3 3-3" />
-                  <path d="m6 2 3 3-3 3" />
-                </svg>
-              </button>
-              
-              {/* Power Off Button */}
-              <button 
-                onClick={() => setIsCameraOn(false)}
-                className="aspect-square bg-red-500/20 border border-red-500/50 p-3 rounded-full hover:bg-red-500/30 hover:scale-110 transition-all text-red-400 hover:text-red-300"
-                title="Power Off"
-              >
-                <Power size={18} />
-              </button>
+        {/* Abstract ASCII Video Substrate */}
+        <ASCIIFeed />
 
-              {/* Capture for LLM Analysis */}
-              <button 
-                onClick={handleCapture}
-                className="aspect-square bg-[#10b981]/20 border border-[#10b981]/50 p-3 rounded-full hover:bg-[#10b981]/30 hover:scale-110 transition-all text-[#10b981] hover:text-white"
-                title="Capture for LLM Analysis"
-              >
-                <Maximize size={18} />
-              </button>
-            </div>
-
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-4">
-              <button className="aspect-square bg-black/40 border border-[#22d3ee]/30 p-3 rounded-full hover:bg-[#22d3ee]/20 hover:scale-110 transition-all text-[#22d3ee] z-20">
-                <Maximize size={16} />
-              </button>
-            </div>
-          </>
-        )}
+        {/* HUD Elements */}
+        <div className="absolute w-2/3 h-2/3 border border-[#22d3ee]/10 flex items-center justify-center pointer-events-none">
+          {/* Target Box Crosshairs */}
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#22d3ee]/60" />
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#22d3ee]/60" />
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#22d3ee]/60" />
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#22d3ee]/60" />
+          
+          {/* Center Target */}
+          <ScanFace size={48} className="text-[#22d3ee]/20 animate-pulse" />
+        </div>
+        
+        <div className="absolute bottom-6 left-6 text-[10px] font-mono tracking-widest text-[#22d3ee]/70">
+          <div>LOC: 34.0522°N, 118.2437°W</div>
+          <div>FOCUS: 0.982m [LOCKED]</div>
+        </div>
+        
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-4">
+          <button className="aspect-square bg-black/40 border border-[#22d3ee]/30 p-3 rounded-full hover:bg-[#22d3ee]/20 hover:scale-110 transition-all text-[#22d3ee]">
+            <Maximize size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -997,7 +686,7 @@ function AudioTab() {
   const bars = Array.from({ length: 40 });
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-140px)]">
       <div className="flex items-center gap-3 mb-4 border-b border-[#c084fc]/20 pb-3">
         <Mic size={18} className="text-[#c084fc]" />
         <h2 className="text-[11px] font-black tracking-[0.3em] text-[#c084fc] uppercase">ACOUSTICS: SONIC_RESONANCE</h2>
@@ -1042,90 +731,184 @@ function AudioTab() {
 
 // ---- Main Application ----
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'protector' | 'core' | 'sensors' | 'optics' | 'chat' | 'vision' | 'audio' | 'data'>('protector');
+  const [activeTab, setActiveTab] = useState<'core' | 'sensors' | 'optics' | 'chat' | 'audio' | 'data'>('core');
   const [settings, setSettings] = useLocalStorage<Settings>('nexus_settings', defaultSettings);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const { status: wsStatus } = useCrystalSocket(settings.wsUrl);
   const starfieldRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  
+  // Ghost Protocol State
+  const [isGhosted, setIsGhosted] = useState(false);
+  const [ghostClicks, setGhostClicks] = useState(0);
 
-  const handleCapture = (img: string) => {
-    setCapturedImage(img);
-    setActiveTab('vision');
+  // Reset scroll and parallax when switching tabs
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo(0, 0);
+    }
+    if (starfieldRef.current) {
+      const layer1 = starfieldRef.current.querySelector('.layer-1') as HTMLElement;
+      const layer2 = starfieldRef.current.querySelector('.layer-2') as HTMLElement;
+      const layer3 = starfieldRef.current.querySelector('.layer-3') as HTMLElement;
+      const nebulas = starfieldRef.current.querySelectorAll('.layer-nebula, .layer-nebula-rev');
+      
+      if (layer1) layer1.style.transform = `translateY(0px)`;
+      if (layer2) layer2.style.transform = `translateY(0px)`;
+      if (layer3) layer3.style.transform = `translateY(0px)`;
+      nebulas.forEach(n => {
+         (n as HTMLElement).style.transform = `translateY(0px)`;
+      });
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    let keyStrokeCount = 0;
+    let timeout: any;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        keyStrokeCount++;
+        if (keyStrokeCount >= 3) {
+          activateGhost();
+        } else {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => { keyStrokeCount = 0; }, 1000);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleCrystalClick = () => {
+    setGhostClicks(prev => {
+      if (prev >= 4) {
+        activateGhost();
+        return 0;
+      }
+      setTimeout(() => setGhostClicks(0), 1500);
+      return prev + 1;
+    });
+  };
+
+  const activateGhost = () => {
+    localStorage.clear();
+    setSettings(defaultSettings);
+    setIsGhosted(true);
   };
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     if (starfieldRef.current) {
       const y = e.currentTarget.scrollTop;
-      // Parallax effect: moves up slightly relative to the container as you scroll down
-      starfieldRef.current.style.transform = `translateY(-${y * 0.15}px)`;
+      requestAnimationFrame(() => {
+        if (!starfieldRef.current) return;
+        
+        // Multi-layer depth parallaxing
+        const layer1 = starfieldRef.current.querySelector('.layer-1') as HTMLElement;
+        const layer2 = starfieldRef.current.querySelector('.layer-2') as HTMLElement;
+        const layer3 = starfieldRef.current.querySelector('.layer-3') as HTMLElement;
+        const nebulas = starfieldRef.current.querySelectorAll('.layer-nebula');
+        const nebulasRev = starfieldRef.current.querySelectorAll('.layer-nebula-rev');
+        
+        if (layer1) layer1.style.transform = `translateY(${y * 0.1}px)`;
+        if (layer2) layer2.style.transform = `translateY(${y * 0.25}px)`;
+        if (layer3) layer3.style.transform = `translateY(${y * 0.45}px)`;
+        
+        nebulas.forEach(n => {
+           (n as HTMLElement).style.transform = `translateY(${y * 0.05}px)`;
+        });
+        nebulasRev.forEach(n => {
+           (n as HTMLElement).style.transform = `translateY(${y * 0.08}px)`;
+        });
+      });
     }
   };
 
+  if (isGhosted) {
+    return (
+      <div className="min-h-screen bg-white text-black font-sans flex flex-col items-center pt-24" style={{ fontFamily: 'Times New Roman, serif' }}>
+         <h1 className="text-3xl font-bold mb-4">502 Bad Gateway</h1>
+         <hr className="w-full max-w-xl border-t border-gray-300" />
+         <p className="mt-4 text-sm tracking-wide">nginx/1.18.0 (Ubuntu)</p>
+      </div>
+    );
+  }
+
   const tabs = [
-    { id: 'protector', label: 'Protector', icon: Shield },
     { id: 'core', label: 'Core', icon: Activity },
     { id: 'sensors', label: 'Sensors', icon: Cpu },
-    { id: 'optics', label: 'SLS Cam', icon: Eye },
-    { id: 'vision', label: 'Vision', icon: ScanFace },
+    { id: 'optics', label: 'Camera', icon: Eye },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'audio', label: 'Audio', icon: Mic },
     { id: 'data', label: 'Data', icon: Database },
   ] as const;
 
   return (
-    <div className="relative h-[100dvh] w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
-      {/* Animated Background */}
-      <Starfield ref={starfieldRef} />
-
-      {/* HEADER */}
-      <header className="h-[56px] border-b border-[#22d3ee]/20 bg-black/60 flex items-center px-4 sm:px-6 backdrop-blur-xl z-20 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 mr-2 rounded bg-[linear-gradient(135deg,#22d3ee,#c084fc)] rotate-45 flex items-center justify-center shadow-[0_0_15px_rgba(34,211,238,0.5)] animate-[diamond-pulse_3s_ease-in-out_infinite]">
-            <span className="text-black font-black text-xl rotate-[-45deg] animate-[star-spin_12s_linear_infinite]">◈</span>
-          </div>
-          <div className="flex items-center tracking-[0.2em] font-light text-[14px]">
-            <span className="hidden sm:inline">STAR CITY</span>
-            <span className="text-[#22d3ee] font-bold sm:ml-2">· SOVEREIGN</span>
-          </div>
-        </div>
+    <div 
+      className="min-h-screen bg-[#050505] text-white flex justify-center font-mono tracking-wide"
+      data-sentinel-baseline="11.3Hz"
+      data-phi-formula="Φ_sentinel = (Σ W_i*X_i) + B ± Δ_11.3"
+    >
+      <div className="w-full lg:max-w-7xl h-screen flex flex-col relative overflow-hidden border border-[#22d3ee]/10" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
         
-        <div className="ml-auto flex items-center gap-4">
-          <div className="hidden sm:block px-3 py-1 border border-[#22d3ee]/30 text-[#22d3ee] text-[10px] font-black rounded-full uppercase">
-            11.3 Hz LOCKED
-          </div>
-          <div className="hidden sm:block text-[#10b981] text-[11px] font-bold">
-            Φ 0.96
-          </div>
-          <div className="hidden lg:flex items-center gap-3 ml-4 bg-[#22d3ee]/5 p-1 px-3 rounded border border-[#22d3ee]/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]">
-            <div className="text-right leading-tight">
-              <div className="text-[9px] text-white/50 uppercase tracking-widest">SAGE: CORE</div>
-              <div className="text-[11px] text-emerald-400 font-bold tracking-wider">emerald-400</div>
+        {/* Animated Background */}
+        <Starfield ref={starfieldRef} />
+
+        {/* HEADER */}
+        <header className="h-[56px] border-b border-[#22d3ee]/20 bg-black/60 flex items-center px-4 sm:px-6 backdrop-blur-xl z-20 shrink-0">
+          <div className="flex items-center gap-3">
+            <div onClick={handleCrystalClick} className="cursor-pointer">
+              <CrystalStar className="mr-2" />
             </div>
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=merlin" className="w-8 h-8 rounded shrink-0 bg-black border border-[#22d3ee]/30" alt="avatar" />
+            <div className="flex items-center tracking-[0.2em] font-light text-[14px]">
+              <span className="text-[#22d3ee] font-bold">STAR-CITY SOVEREIGN</span>
+            </div>
+          </div>
+          
+          <div className="ml-auto flex items-center gap-4">
+            <div className="hidden sm:block px-3 py-1 border border-[#22d3ee]/30 text-[#22d3ee] text-[10px] font-black rounded-full uppercase">
+              11.3 Hz LOCKED
+            </div>
+            <div className="hidden sm:block text-[#10b981] text-[11px] font-bold">
+              Φ 0.96
+            </div>
+            <div className="hidden lg:flex items-center gap-3 ml-4 bg-[#22d3ee]/5 p-1 px-3 rounded border border-[#22d3ee]/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+              <div className="text-right leading-tight">
+                <div className="text-[9px] text-white/50 uppercase tracking-widest">SOVEREIGN: CORE</div>
+                <div className="text-[11px] text-emerald-400 font-bold tracking-wider">emerald-400</div>
+              </div>
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=merlin" className="w-8 h-8 rounded shrink-0 bg-black border border-[#22d3ee]/30" alt="avatar" />
+            </div>
+          </div>
+        </header>
+
+        {/* MAIN CONTENT AREA */}
+        <main ref={mainRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32 scroll-smooth relative z-10">
+          {activeTab === 'core' && <CoreTab />}
+          {activeTab === 'sensors' && <SensorsTab settings={settings} />}
+          {activeTab === 'optics' && <OpticsTab />}
+          {activeTab === 'chat' && <ChatTab settings={settings} />}
+          {activeTab === 'audio' && <AudioTab />}
+          {activeTab === 'data' && <DataTab settings={settings} setSettings={setSettings} />}
+        </main>
+
+        {/* BOTTOM DECORATIVE TEXT & NAV */}
+        <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+          <div className="flex justify-between px-6 pb-20 text-[10px] font-mono tracking-widest uppercase text-[#22d3ee]/40 hidden md:flex">
+            <span>CORE - Metrics</span>
+            <span>SENSORS - Environmental</span>
+            <span>OPTICS - Bio-Visual</span>
+            <span>CHAT - Neural Link</span>
+            <span>AUDIO - Resonance</span>
+            <span>DATA - Config</span>
           </div>
         </div>
-      </header>
 
-      {/* MAIN CONTENT AREA */}
-      <main onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 scroll-smooth relative z-10">
-        {activeTab === 'protector' && <ProtectorDashboard />}
-        {activeTab === 'core' && <CoreTab />}
-        {activeTab === 'sensors' && <SensorsTab settings={settings} />}
-        {activeTab === 'optics' && <OpticsTab onCapture={handleCapture} />}
-        {activeTab === 'vision' && <VisionTab settings={settings} initialImage={capturedImage} />}
-        {activeTab === 'chat' && <ChatTab settings={settings} />}
-        {activeTab === 'audio' && <AudioTab />}
-        {activeTab === 'data' && <DataTab settings={settings} setSettings={setSettings} />}
-      </main>
-
-      {/* BOTTOM NAV */}
-      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex justify-around items-center min-w-full gap-2 px-2">
+        <nav className="absolute bottom-0 left-0 right-0 bg-black/80 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[64px] flex justify-around items-center px-4 md:px-[5vw] z-30">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center gap-[4px] min-w-[64px] transition-all duration-300 font-bold uppercase tracking-[0.05em] text-[9px] ${activeTab === tab.id ? 'text-[#22d3ee] drop-shadow-[0_0_10px_rgba(34,211,238,1)]' : 'text-white/40 hover:text-[#22d3ee]/70'}`}
+              className={`flex flex-col items-center justify-center gap-[4px] transition-all duration-300 font-bold uppercase tracking-[0.1em] text-[10px] ${activeTab === tab.id ? 'text-[#22d3ee] drop-shadow-[0_0_10px_rgba(34,211,238,1)]' : 'text-white/40 hover:text-[#22d3ee]/70'}`}
             >
               {activeTab === tab.id ? (
                 <div className="w-1 h-1 bg-[#22d3ee] rounded-full" />
@@ -1133,11 +916,11 @@ export default function App() {
                 <div className="w-1 h-1 bg-transparent rounded-full" />
               )}
               <tab.icon size={18} strokeWidth={activeTab === tab.id ? 2 : 1.5} />
-              <span className="whitespace-nowrap">{tab.label}</span>
+              <span>{tab.label}</span>
             </button>
           ))}
-        </div>
-      </nav>
+        </nav>
+      </div>
     </div>
   );
 }
