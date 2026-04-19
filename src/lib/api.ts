@@ -1,23 +1,8 @@
 import { Settings } from "./store";
 import { GoogleGenAI } from '@google/genai';
 
-export async function fetchOllamaModels(baseUrl: string, apiKey?: string) {
-  try {
-    const headers: Record<string, string> = {};
-    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-
-    const res = await fetch(`${baseUrl}/api/tags`, { headers });
-    if (!res.ok) throw new Error("Failed connecting to Ollama");
-    const data = await res.json();
-    return data.models || [];
-  } catch (err) {
-    console.error("fetchOllamaModels failed:", err);
-    return [];
-  }
-}
-
 export async function generateResponse(
-  provider: 'ollama' | 'google' | 'grok' | 'openRouter' | 'visionLLM',
+  provider: 'google' | 'grok' | 'openRouter' | 'visionLLM',
   model: string,
   prompt: string,
   settings: Settings,
@@ -45,25 +30,6 @@ export async function generateResponse(
     return response.text;
   }
   
-  if (provider === 'ollama') {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (settings.ollamaApi) headers['Authorization'] = `Bearer ${settings.ollamaApi}`;
-
-    const body: any = { model, prompt, stream: false };
-    if (imageBase64) {
-      body.images = [imageBase64];
-    }
-
-    const res = await fetch(`${settings.ollamaUrl}/api/generate`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error(`Ollama error: ${res.statusText}`);
-    const data = await res.json();
-    return data.response;
-  }
-
   if (provider === 'openRouter') {
     const content: any[] = [{ type: 'text', text: prompt }];
     if (imageBase64) {

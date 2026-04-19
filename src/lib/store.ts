@@ -35,8 +35,6 @@ export type Settings = {
   grokApi: string;
   openRouterApi: string;
   githubToken: string;
-  ollamaUrl: string;
-  ollamaApi: string;
   wsUrl: string;
   visionLLMUrl: string;
 };
@@ -46,8 +44,6 @@ export const defaultSettings: Settings = {
   grokApi: import.meta.env.VITE_GROK_API_KEY || '',
   openRouterApi: import.meta.env.VITE_OPENROUTER_API_KEY || '',
   githubToken: import.meta.env.VITE_GITHUB_TOKEN || '',
-  ollamaUrl: 'http://localhost:11434',
-  ollamaApi: import.meta.env.VITE_OLLAMA_API_KEY || '',
   wsUrl: 'wss://echo.websocket.events',
   visionLLMUrl: 'http://localhost:8000',
 };

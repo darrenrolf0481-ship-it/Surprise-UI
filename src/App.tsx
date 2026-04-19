@@ -9,7 +9,7 @@ import CrystallineRadar from './components/CrystallineRadar';
 import { QuartzBarChart } from './components/QuartzBarChart';
 import { useLocalStorage, defaultSettings, Settings } from './lib/store';
 import { useCrystalSocket } from './lib/useCrystalSocket';
-import { fetchOllamaModels, generateResponse, fetchGithubTree, fetchGithubFileContent, fetchGithubFilePreviousContent } from './lib/api';
+import { generateResponse, fetchGithubTree, fetchGithubFileContent, fetchGithubFilePreviousContent } from './lib/api';
 
 // ---- Starfield Background ----
 const Starfield = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
@@ -157,7 +157,7 @@ function CoreTab() {
 
 // ---- Chat Tab (Models) ----
 function ChatTab({ settings }: { settings: Settings }) {
-  const [provider, setProvider] = useState<'ollama' | 'google' | 'grok' | 'openRouter' | 'visionLLM'>('google');
+  const [provider, setProvider] = useState<'google' | 'grok' | 'openRouter' | 'visionLLM'>('google');
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState('');
   const [prompt, setPrompt] = useState('');
@@ -167,13 +167,7 @@ function ChatTab({ settings }: { settings: Settings }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (provider === 'ollama') {
-      fetchOllamaModels(settings.ollamaUrl, settings.ollamaApi).then(models => {
-        const names = models.map((m: any) => m.name);
-        setModelOptions(names);
-        if (names.length > 0) setSelectedModel(names[0]);
-      });
-    } else if (provider === 'google') {
+    if (provider === 'google') {
       setModelOptions([
         'gemini-1.5-flash', 
         'gemini-1.5-pro',
@@ -196,7 +190,7 @@ function ChatTab({ settings }: { settings: Settings }) {
       setModelOptions(['VisionLLMv2-7B', 'VisionLLM-Detection', 'VisionLLM-Pose', 'VisionLLM-Segmentation']);
       setSelectedModel('VisionLLMv2-7B');
     }
-  }, [provider, settings.ollamaUrl]);
+  }, [provider]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -236,7 +230,7 @@ function ChatTab({ settings }: { settings: Settings }) {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {['google', 'ollama', 'openRouter', 'grok', 'visionLLM'].map(p => (
+        {['google', 'openRouter', 'grok', 'visionLLM'].map(p => (
           <button 
             key={p}
             onClick={() => setProvider(p as any)}
@@ -503,8 +497,6 @@ function DataTab({ settings, setSettings }: { settings: Settings, setSettings: a
     { key: 'openRouterApi', label: 'OPENROUTER API KEY' },
     { key: 'grokApi', label: 'GROK API KEY' },
     { key: 'githubToken', label: 'GITHUB TOKEN (OPTIONAL)' },
-    { key: 'ollamaUrl', label: 'OLLAMA BASE URL' },
-    { key: 'ollamaApi', label: 'OLLAMA API KEY (OPTIONAL)' },
     { key: 'visionLLMUrl', label: 'VISIONLLM SERVER URL' },
     { key: 'wsUrl', label: 'WEBSOCKET BRIDGE URL' },
   ];
