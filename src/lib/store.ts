@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useState, useEffect } from 'react';
 
 // Basic local storage backed state
@@ -37,6 +38,7 @@ export type Settings = {
   ollamaUrl: string;
   ollamaApi: string;
   wsUrl: string;
+  visionLLMUrl: string;
 };
 
 export const defaultSettings: Settings = {
@@ -47,4 +49,5 @@ export const defaultSettings: Settings = {
   ollamaUrl: 'http://localhost:11434',
   ollamaApi: import.meta.env.VITE_OLLAMA_API_KEY || '',
   wsUrl: 'wss://echo.websocket.events',
+  visionLLMUrl: 'http://localhost:8000',
 };

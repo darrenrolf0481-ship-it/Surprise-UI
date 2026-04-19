@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; size?: number; phi?: number }) {
+function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; size?: number; phi?: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -65,51 +65,6 @@ export function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: numbe
       </div>
     </div>
   );
-}          
-          {/* Central Bright Core */}
-          <polygon points="100,60 115,100 100,140 85,100" fill="#fff" opacity="0.2" />
-          <polygon points="140,75 110,110 60,125 90,90" fill="#fff" opacity="0.2" />
-          <polygon points="60,75 90,110 140,125 110,90" fill="#fff" opacity="0.2" />
-          <circle cx="100" cy="100" r="4" fill="#ffffff" filter="drop-shadow(0 0 8px #fff)"/>
-
-          <defs>
-            <linearGradient id="starVert1" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#c084fc" stopOpacity="0.6" />
-            </linearGradient>
-            <linearGradient id="starDiag1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#c084fc" stopOpacity="0.6" />
-            </linearGradient>
-            <linearGradient id="starDiag2" x1="1" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#c084fc" stopOpacity="0.6" />
-            </linearGradient>
-            <linearGradient id="crystalHighlightLeft" x1="0" y1="0" x2="1" y2="0">
-               <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/>
-               <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0"/>
-            </linearGradient>
-            <linearGradient id="crystalHighlightRight" x1="0" y1="0" x2="1" y2="0">
-               <stop offset="0%" stopColor="#000000" stopOpacity="0.6"/>
-               <stop offset="100%" stopColor="#000000" stopOpacity="0.0"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-
-      <ResponsiveContainer width="100%" height="100%">
-        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-          <PolarGrid stroke="#22d3ee" strokeOpacity={0.4} />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#fff', fontSize: 13, fontFamily: 'monospace' }} />
-          <Radar name="Phi" dataKey="A" stroke="#c084fc" strokeWidth={2} fill="url(#colorPhi)" fillOpacity={0.3} isAnimationActive={false} />
-          <defs>
-            <radialGradient id="colorPhi" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#c084fc" stopOpacity={0.9}/>
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.0}/>
-            </radialGradient>
-          </defs>
-        </RadarChart>
-      </ResponsiveContainer>
-    </div>
-  );
 }
+
+export default CrystallineRadar;

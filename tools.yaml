@@ -1,0 +1,30 @@
+kind: source
+name: sage-api
+type: http
+url: http://localhost:8000
+
+---
+kind: tool
+name: sage-vision-analysis
+type: http
+source: sage-api
+description: Analyze an image using Sage-7's VisionLLM.
+parameters:
+  - name: prompt
+    type: string
+    description: The question or instruction for the analysis.
+    isRequired: true
+  - name: image
+    type: string
+    description: Base64 encoded JPEG image.
+    isRequired: false
+  - name: task
+    type: string
+    description: The task to perform (vqa, detection, pose, segmentation).
+    default: vqa
+method: POST
+path: /chat
+body:
+  text: "{{.prompt}}"
+  image: "{{.image}}"
+  task: "{{.task}}"

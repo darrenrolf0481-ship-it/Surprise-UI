@@ -29,11 +29,4 @@ export function QuartzBarChart({ data, height = 280 }: { data: any[]; height?: n
       </ResponsiveContainer>
     </div>
   );
-}              <stop offset="100%" stopColor="#0a0a2a" stopOpacity={0.8}/>
-            </linearGradient>
-          </defs>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
 }

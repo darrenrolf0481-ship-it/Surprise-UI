@@ -17,18 +17,30 @@ export async function fetchOllamaModels(baseUrl: string, apiKey?: string) {
 }
 
 export async function generateResponse(
-  provider: 'ollama' | 'google' | 'grok' | 'openRouter',
+  provider: 'ollama' | 'google' | 'grok' | 'openRouter' | 'visionLLM',
   model: string,
   prompt: string,
-  settings: Settings
+  settings: Settings,
+  imageBase64?: string
 ) {
   if (provider === 'google') {
     const apiKey = settings.googleApi;
     if (!apiKey) throw new Error("Google API key missing");
     const ai = new GoogleGenAI({ apiKey });
+    
+    const contents: any[] = [{ text: prompt }];
+    if (imageBase64) {
+      contents.push({
+        inlineData: {
+          data: imageBase64,
+          mimeType: 'image/jpeg'
+        }
+      });
+    }
+    
     const response = await ai.models.generateContent({
       model: model || 'gemini-1.5-flash',
-      contents: prompt,
+      contents,
     });
     return response.text;
   }
@@ -37,10 +49,15 @@ export async function generateResponse(
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (settings.ollamaApi) headers['Authorization'] = `Bearer ${settings.ollamaApi}`;
 
+    const body: any = { model, prompt, stream: false };
+    if (imageBase64) {
+      body.images = [imageBase64];
+    }
+
     const res = await fetch(`${settings.ollamaUrl}/api/generate`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ model, prompt, stream: false })
+      body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error(`Ollama error: ${res.statusText}`);
     const data = await res.json();
@@ -48,6 +65,14 @@ export async function generateResponse(
   }
 
   if (provider === 'openRouter') {
+    const content: any[] = [{ type: 'text', text: prompt }];
+    if (imageBase64) {
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
+      });
+    }
+    
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -56,7 +81,7 @@ export async function generateResponse(
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content }]
       })
     });
     if (!res.ok) throw new Error(`OpenRouter error: ${res.statusText}`);
@@ -65,7 +90,14 @@ export async function generateResponse(
   }
 
   if (provider === 'grok') {
-    // Note: this represents xAI integration endpoints, currently open to adjustments.
+    const content: any[] = [{ type: 'text', text: prompt }];
+    if (imageBase64) {
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
+      });
+    }
+    
     const res = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -74,12 +106,36 @@ export async function generateResponse(
       },
       body: JSON.stringify({
         model: model || 'grok-beta',
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content }]
       })
     });
     if (!res.ok) throw new Error(`Grok error: ${res.statusText}`);
     const data = await res.json();
     return data.choices[0].message.content;
+  }
+
+  if (provider === 'visionLLM') {
+    // Map model names to server tasks
+    const taskMap: Record<string, string> = {
+      'VisionLLMv2-7B': 'vqa',
+      'VisionLLM-Detection': 'detection',
+      'VisionLLM-Pose': 'pose',
+      'VisionLLM-Segmentation': 'segmentation'
+    };
+    const task = taskMap[model] || 'vqa';
+
+    const res = await fetch(`${settings.visionLLMUrl}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: prompt,
+        image: imageBase64,
+        task: task
+      })
+    });
+    if (!res.ok) throw new Error(`VisionLLM error: ${res.statusText}`);
+    const data = await res.json();
+    return data.text || data.response || data.output || JSON.stringify(data);
   }
 
   throw new Error(`Provider ${provider} not supported inline yet`);
