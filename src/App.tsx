@@ -1067,7 +1067,7 @@ export default function App() {
   ] as const;
 
   return (
-    <div className="relative h-screen w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
+    <div className="relative h-[100dvh] w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
       {/* Animated Background */}
       <Starfield ref={starfieldRef} />
 
@@ -1113,7 +1113,7 @@ export default function App() {
       </main>
 
       {/* BOTTOM NAV */}
-      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30">
+      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30 pb-[env(safe-area-inset-bottom)]">
         <div className="flex justify-around items-center min-w-full gap-2 px-2">
           {tabs.map(tab => (
             <button
