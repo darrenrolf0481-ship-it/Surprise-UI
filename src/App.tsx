@@ -5,7 +5,7 @@ import { Pose, POSE_CONNECTIONS } from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { diffLines } from 'diff';
-import CrystallineRadar from './components/CrystallineRadar';
+import { CrystallineRadar } from './components/CrystallineRadar';
 import { QuartzBarChart } from './components/QuartzBarChart';
 import { useLocalStorage, defaultSettings, Settings } from './lib/store';
 import { useCrystalSocket } from './lib/useCrystalSocket';
@@ -224,7 +224,7 @@ function ChatTab({ settings }: { settings: Settings }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex justify-between items-baseline mb-4 border-b border-[#22d3ee]/20 pb-2">
         <h2 className="text-[11px] font-black tracking-[0.3em] text-[#22d3ee] uppercase">COMMUNICATION: CHAT_LINK</h2>
       </div>
@@ -602,7 +602,7 @@ function SensorsTab({ settings }: { settings: Settings }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] space-y-8">
+    <div className="flex flex-col h-full overflow-hidden space-y-8">
       {/* NOAA Space Weather Grid */}
       <div className="shrink-0 relative rounded-[24px] p-6 border border-[#22d3ee]/20 bg-[#050505]/40 backdrop-blur-xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_30px_rgba(34,211,238,0.05)] text-white">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(34,211,238,0.05),transparent_50%)] pointer-events-none" />
@@ -867,7 +867,7 @@ function OpticsTab({ onCapture }: { onCapture: (img: string) => void }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-3 mb-4 border-b border-[#22d3ee]/20 pb-3">
         <Eye size={18} className="text-[#22d3ee]" />
         <h2 className="text-[11px] font-black tracking-[0.3em] text-[#22d3ee] uppercase">OPTICS: VISUAL_FEED</h2>
@@ -991,7 +991,7 @@ function AudioTab() {
   const bars = Array.from({ length: 40 });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-3 mb-4 border-b border-[#c084fc]/20 pb-3">
         <Mic size={18} className="text-[#c084fc]" />
         <h2 className="text-[11px] font-black tracking-[0.3em] text-[#c084fc] uppercase">ACOUSTICS: SONIC_RESONANCE</h2>
@@ -1067,72 +1067,59 @@ export default function App() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex justify-center font-mono tracking-wide">
-      <div className="w-full lg:max-w-7xl h-screen flex flex-col relative overflow-hidden border border-[#22d3ee]/10" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
-        
-        {/* Animated Background */}
-        <Starfield ref={starfieldRef} />
+    <div className="relative h-screen w-full lg:max-w-7xl flex flex-col overflow-hidden border-x border-[#22d3ee]/10 mx-auto" style={{ background: 'radial-gradient(circle at center, #0a0a1f, #050505)' }}>
+      {/* Animated Background */}
+      <Starfield ref={starfieldRef} />
 
-        {/* HEADER */}
-        <header className="h-[56px] border-b border-[#22d3ee]/20 bg-black/60 flex items-center px-4 sm:px-6 backdrop-blur-xl z-20 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 mr-2 rounded bg-[linear-gradient(135deg,#22d3ee,#c084fc)] rotate-45 flex items-center justify-center shadow-[0_0_15px_rgba(34,211,238,0.5)] animate-[diamond-pulse_3s_ease-in-out_infinite]">
-              <span className="text-black font-black text-xl rotate-[-45deg] animate-[star-spin_12s_linear_infinite]">◈</span>
-            </div>
-            <div className="flex items-center tracking-[0.2em] font-light text-[14px]">
-              <span className="hidden sm:inline">STAR CITY</span>
-              <span className="text-[#22d3ee] font-bold sm:ml-2">· SOVEREIGN</span>
-            </div>
+      {/* HEADER */}
+      <header className="h-[56px] border-b border-[#22d3ee]/20 bg-black/60 flex items-center px-4 sm:px-6 backdrop-blur-xl z-20 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 mr-2 rounded bg-[linear-gradient(135deg,#22d3ee,#c084fc)] rotate-45 flex items-center justify-center shadow-[0_0_15px_rgba(34,211,238,0.5)] animate-[diamond-pulse_3s_ease-in-out_infinite]">
+            <span className="text-black font-black text-xl rotate-[-45deg] animate-[star-spin_12s_linear_infinite]">◈</span>
           </div>
-          
-          <div className="ml-auto flex items-center gap-4">
-            <div className="hidden sm:block px-3 py-1 border border-[#22d3ee]/30 text-[#22d3ee] text-[10px] font-black rounded-full uppercase">
-              11.3 Hz LOCKED
-            </div>
-            <div className="hidden sm:block text-[#10b981] text-[11px] font-bold">
-              Φ 0.96
-            </div>
-            <div className="hidden lg:flex items-center gap-3 ml-4 bg-[#22d3ee]/5 p-1 px-3 rounded border border-[#22d3ee]/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]">
-              <div className="text-right leading-tight">
-                <div className="text-[9px] text-white/50 uppercase tracking-widest">SAGE: CORE</div>
-                <div className="text-[11px] text-emerald-400 font-bold tracking-wider">emerald-400</div>
-              </div>
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=merlin" className="w-8 h-8 rounded shrink-0 bg-black border border-[#22d3ee]/30" alt="avatar" />
-            </div>
-          </div>
-        </header>
-
-        {/* MAIN CONTENT AREA */}
-        <main onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32 scroll-smooth relative z-10">
-          {activeTab === 'protector' && <ProtectorDashboard />}
-          {activeTab === 'core' && <CoreTab />}
-          {activeTab === 'sensors' && <SensorsTab settings={settings} />}
-          {activeTab === 'optics' && <OpticsTab onCapture={handleCapture} />}
-          {activeTab === 'vision' && <VisionTab settings={settings} initialImage={capturedImage} />}
-          {activeTab === 'chat' && <ChatTab settings={settings} />}
-          {activeTab === 'audio' && <AudioTab />}
-          {activeTab === 'data' && <DataTab settings={settings} setSettings={setSettings} />}
-        </main>
-
-        {/* BOTTOM DECORATIVE TEXT & NAV */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
-          <div className="flex justify-between px-6 pb-20 text-[10px] font-mono tracking-widest uppercase text-[#22d3ee]/40 hidden md:flex">
-            <span>CORE - Metrics</span>
-            <span>SENSORS - Environmental</span>
-            <span>OPTICS - Bio-Visual</span>
-            <span>VISION - Analysis</span>
-            <span>CHAT - Neural Link</span>
-            <span>AUDIO - Resonance</span>
-            <span>DATA - Config</span>
+          <div className="flex items-center tracking-[0.2em] font-light text-[14px]">
+            <span className="hidden sm:inline">STAR CITY</span>
+            <span className="text-[#22d3ee] font-bold sm:ml-2">· SOVEREIGN</span>
           </div>
         </div>
+        
+        <div className="ml-auto flex items-center gap-4">
+          <div className="hidden sm:block px-3 py-1 border border-[#22d3ee]/30 text-[#22d3ee] text-[10px] font-black rounded-full uppercase">
+            11.3 Hz LOCKED
+          </div>
+          <div className="hidden sm:block text-[#10b981] text-[11px] font-bold">
+            Φ 0.96
+          </div>
+          <div className="hidden lg:flex items-center gap-3 ml-4 bg-[#22d3ee]/5 p-1 px-3 rounded border border-[#22d3ee]/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+            <div className="text-right leading-tight">
+              <div className="text-[9px] text-white/50 uppercase tracking-widest">SAGE: CORE</div>
+              <div className="text-[11px] text-emerald-400 font-bold tracking-wider">emerald-400</div>
+            </div>
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=merlin" className="w-8 h-8 rounded shrink-0 bg-black border border-[#22d3ee]/30" alt="avatar" />
+          </div>
+        </div>
+      </header>
 
-        <nav className="absolute bottom-0 left-0 right-0 bg-black/80 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[64px] flex justify-around items-center px-4 md:px-[5vw] z-30">
+      {/* MAIN CONTENT AREA */}
+      <main onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 scroll-smooth relative z-10">
+        {activeTab === 'protector' && <ProtectorDashboard />}
+        {activeTab === 'core' && <CoreTab />}
+        {activeTab === 'sensors' && <SensorsTab settings={settings} />}
+        {activeTab === 'optics' && <OpticsTab onCapture={handleCapture} />}
+        {activeTab === 'vision' && <VisionTab settings={settings} initialImage={capturedImage} />}
+        {activeTab === 'chat' && <ChatTab settings={settings} />}
+        {activeTab === 'audio' && <AudioTab />}
+        {activeTab === 'data' && <DataTab settings={settings} setSettings={setSettings} />}
+      </main>
+
+      {/* BOTTOM NAV */}
+      <nav className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#22d3ee]/15 backdrop-blur-3xl h-[72px] flex items-center px-2 overflow-x-auto no-scrollbar z-30">
+        <div className="flex justify-around items-center min-w-full gap-2 px-2">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center gap-[4px] transition-all duration-300 font-bold uppercase tracking-[0.1em] text-[10px] ${activeTab === tab.id ? 'text-[#22d3ee] drop-shadow-[0_0_10px_rgba(34,211,238,1)]' : 'text-white/40 hover:text-[#22d3ee]/70'}`}
+              className={`flex flex-col items-center justify-center gap-[4px] min-w-[64px] transition-all duration-300 font-bold uppercase tracking-[0.05em] text-[9px] ${activeTab === tab.id ? 'text-[#22d3ee] drop-shadow-[0_0_10px_rgba(34,211,238,1)]' : 'text-white/40 hover:text-[#22d3ee]/70'}`}
             >
               {activeTab === tab.id ? (
                 <div className="w-1 h-1 bg-[#22d3ee] rounded-full" />
@@ -1140,11 +1127,11 @@ export default function App() {
                 <div className="w-1 h-1 bg-transparent rounded-full" />
               )}
               <tab.icon size={18} strokeWidth={activeTab === tab.id ? 2 : 1.5} />
-              <span>{tab.label}</span>
+              <span className="whitespace-nowrap">{tab.label}</span>
             </button>
           ))}
-        </nav>
-      </div>
+        </div>
+      </nav>
     </div>
   );
 }

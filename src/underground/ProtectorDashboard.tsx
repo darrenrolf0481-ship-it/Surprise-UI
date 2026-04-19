@@ -142,7 +142,7 @@ const ProtectorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-6 font-mono overflow-x-hidden">
+    <div className="w-full text-slate-200 font-mono">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-purple-500/20 pb-4">

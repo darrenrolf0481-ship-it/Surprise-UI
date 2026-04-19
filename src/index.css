@@ -35,12 +35,17 @@
   100% { transform: translate(0, 0) scale(1); }
 }
 
-body {
-  background: radial-gradient(circle at center, #0a0a1f, #050505);
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: #050505;
+}
+
+body {
   color: #fff;
   font-family: var(--font-mono);
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* custom scrollbar for tech look */
@@ -57,4 +62,14 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(34, 211, 238, 0.6); 
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

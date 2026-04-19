@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; size?: number; phi?: number }) {
+export function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; size?: number; phi?: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -67,4 +67,3 @@ function CrystallineRadar({ data, size = 340, phi = 0.96 }: { data: number[]; si
   );
 }
 
-export default CrystallineRadar;
